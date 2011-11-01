@@ -116,22 +116,6 @@ class Geoloc(RootStanza):
             except ValueError:
                 return None
 
-    def set_area(self, area):
-        """
-        Set the value of the <area> element.
-
-        Arguments:
-            area -- A named area such as a campus or neighborhood
-        """
-        self._set_sub_text('area', text=area)
-        return self
-
-    def get_area(self):
-        """
-        Return the value of the <area> element.
-        """
-        return self._get_sub_text('area')
-
     def set_bearing(self, bearing):
         """
         Set the value of the <bearing> element.
@@ -155,86 +139,6 @@ class Geoloc(RootStanza):
             except ValueError:
                 return None
 
-    def set_building(self, building):
-        """
-        Set the value of the <building> element.
-
-        Arguments:
-            building -- A specific building on a street or in an area
-        """
-        self._set_sub_text('building', text=building)
-        return self
-
-    def get_building(self):
-        """
-        Return the value of the <building> element.
-        """
-        return self._get_sub_text('building')
-
-    def set_country(self, country):
-        """
-        Set the value of the <country> element.
-
-        Arguments:
-            country -- The nation where the user is located
-        """
-        self._set_sub_text('country', text=country)
-        return self
-
-    def get_country(self):
-        """
-        Return the value of the <country> element.
-        """
-        return self._get_sub_text('country')
-
-    def set_countrycode(self, countrycode):
-        """
-        Set the value of the <countrycode> element.
-
-        Arguments:
-            countrycode -- The ISO 3166 two-letter country code
-        """
-        self._set_sub_text('countrycode', text=countrycode)
-        return self
-
-    def get_countrycode(self):
-        """
-        Return the value of the <countrycode> element.
-        """
-        return self._get_sub_text('countrycode')
-
-    def set_datum(self, datum):
-        """
-        Set the value of the <datum> element.
-
-        Arguments:
-            datum -- GPS datum (WGS84)
-        """
-        self._set_sub_text('datum', text=datum)
-        return self
- 
-    def get_datum(self):
-        """
-        Return the value of the <datum> element.
-        """
-        return self._get_sub_text('datum')
-   
-    def set_description(self, description):
-        """
-        Set the value of the <description> element.
-
-        Arguments:
-            description -- A natural-language name for or description of the location
-        """
-        self._set_sub_text('description', text=description)
-        return self
- 
-    def get_description(self):
-        """
-        Return the value of the <description> element.
-        """
-        return self._get_sub_text('description')
-   
     def set_error(self, error):
         """
         Set the value of the <error> element.
@@ -258,22 +162,6 @@ class Geoloc(RootStanza):
             except ValueError:
                 return None
 
-    def set_floor(self, floor):
-        """
-        Set the value of the <floor> element.
-
-        Arguments:
-            floor -- A named floor such as a campus or neighborhood
-        """
-        self._set_sub_text('floor', text=floor)
-        return self
- 
-    def get_floor(self):
-        """
-        Return the value of the <floor> element.
-        """
-        return self._get_sub_text('floor')
-   
     def set_lat(self, lat):
         """
         Set the value of the <lat> element.
@@ -297,22 +185,6 @@ class Geoloc(RootStanza):
             except ValueError:
                 return None
   
-    def set_locality(self, locality):
-        """
-        Set the value of the <locality> element.
-
-        Arguments:
-            locality -- A locality within the administrative region, such as a town or city
-        """
-        self._set_sub_text('locality', text=locality)
-        return self
- 
-    def get_locatity(self):
-        """
-        Return the value of the <locatity> element.
-        """
-        return self._get_sub_text('locatity')
- 
     def set_lon(self, lon):
         """
         Set the value of the <lon> element.
@@ -336,54 +208,6 @@ class Geoloc(RootStanza):
             except ValueError:
                 return None
 
-    def set_postalcode(self, postalcode):
-        """
-        Set the value of the <postalcode> element.
-
-        Arguments:
-            postalcode -- A code used for postal delivery
-        """
-        self._set_sub_text('postalcode', text=postalcode)
-        return self
-
-    def get_postalcode(self):
-        """
-        Return the value of the <postalcode> element.
-        """
-        return self._get_sub_text('postalcode')
-
-    def set_region(self, region):
-        """
-        Set the value of the <region> element.
-
-        Arguments:
-            region -- An administrative region of the nation, such as a state or province
-        """
-        self._set_sub_text('region', text=region)
-        return self
-
-    def get_region(self):
-        """
-        Return the value of the <region> element.
-        """
-        return self._get_sub_text('region')
-
-    def set_room(self, room):
-        """
-        Set the value of the <room> element.
-
-        Arguments:
-            room -- A particular room in a building
-        """
-        self._set_sub_text('room', text=room)
-        return self
- 
-    def get_room(self):
-        """
-        Return the value of the <room> element.
-        """
-        return self._get_sub_text('room')
-   
     def set_speed(self, speed):
         """
         Set the value of the <speed> element.
@@ -407,38 +231,6 @@ class Geoloc(RootStanza):
             except ValueError:
                 return None
 
-    def set_street(self, street):
-        """
-        Set the value of the <street> element.
-
-        Arguments:
-            street -- A thoroughfare within the locality, or a crossing of two thoroughfares
-        """
-        self._set_sub_text('street', text=street)
-        return self
-
-    def get_street(self):
-        """
-        Return the value of the <street> element.
-        """
-        return self._get_sub_text('street')
-
-    def set_text(self, text):
-        """
-        Set the value of the <text> element.
-
-        Arguments:
-            text -- A catch-all element that captures any other information about the location
-        """
-        self._set_sub_text('text', text=text)
-        return self
-
-    def get_text(self):
-        """
-        Return the value of the <text> element.
-        """
-        return self._get_sub_text('text')
-
     def set_timestamp(self, timestamp):
         """
         Set the value of the <timestamp> element.
@@ -458,19 +250,3 @@ class Geoloc(RootStanza):
             return None
         else:
             return xep_0082.datetime(p)
-
-    def set_uri(self, uri):
-        """
-        Set the value of the <uri> element.
-
-        Arguments:
-            uri -- A URI or URL pointing to information about the location
-        """
-        self._set_sub_text('uri', text=uri)
-        return self
-
-    def get_uri(self):
-        """
-        Return the value of the <uri> element.
-        """
-        return self._get_sub_text('uri')
