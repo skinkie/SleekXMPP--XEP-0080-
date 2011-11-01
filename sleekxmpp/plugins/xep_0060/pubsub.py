@@ -9,6 +9,8 @@
 import logging
 
 from sleekxmpp.xmlstream import JID
+from sleekxmpp.xmlstream.handler import Callback
+from sleekxmpp.xmlstream.matcher import StanzaPath
 from sleekxmpp.plugins.base import base_plugin
 from sleekxmpp.plugins.xep_0060 import stanza
 
@@ -26,6 +28,19 @@ class xep_0060(base_plugin):
         self.xep = '0060'
         self.description = 'Publish-Subscribe'
         self.stanza = stanza
+
+        self.xmpp.registerHandler(Callback('pubsub get items', StanzaPath('iq@type=get/pubsub/items'), self._handleGetItems))
+        self.xmpp.registerHandler(Callback('pubsub subscribe', StanzaPath('iq@type=set/pubsub/subscribe'), self._handleSubscribe))
+        self.xmpp.registerHandler(Callback('pubsub unsubscribe', StanzaPath('iq@type=set/pubsub/unsubscribe'), self._handleUnsubscribe))
+
+    def _handleSubscribe(self, iq):
+        self.xmpp.event('pubsub_subscribe', iq)
+    
+    def _handleUnsubscribe(self, iq):
+        self.xmpp.event('pubsub_unsubscribe', iq)
+
+    def _handleGetItems(self, iq):
+        self.xmpp.event('pubsub_get_items', iq)
 
     def create_node(self, jid, node, config=None, ntype=None, ifrom=None,
                     block=True, callback=None, timeout=None):
