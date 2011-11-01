@@ -19,6 +19,7 @@ import threading
 import time
 import types
 import random
+import weakref
 try:
     import queue
 except ImportError:
@@ -719,7 +720,7 @@ class XMLStream(object):
         """
         if handler.stream is None:
             self.__handlers.append(handler)
-            handler.stream = self
+            handler.stream = weakref.ref(self)
 
     def remove_handler(self, name):
         """
@@ -840,8 +841,9 @@ class XMLStream(object):
         def filter_pointers(handler):
             return handler[0] != pointer
 
-        self.__event_handlers[name] = filter(filter_pointers,
-                                             self.__event_handlers[name])
+        self.__event_handlers[name] = list(filter(
+            filter_pointers,
+            self.__event_handlers[name]))
 
     def event_handled(self, name):
         """
@@ -1084,7 +1086,12 @@ class XMLStream(object):
                     # new connections.
                     if not self.session_started_event.is_set():
                         self.send_raw(self.stream_header, now=True)
-                    self.__read_xml()
+                    if not self.__read_xml():
+                        # If the server terminated the stream, end processing
+                        break
+            except SyntaxError as e:
+                log.error("Error reading from XML stream.")
+                self.exception(e)
             except KeyboardInterrupt:
                 log.debug("Keyboard Escape Detected in _process")
                 self.stop.set()
@@ -1115,39 +1122,35 @@ class XMLStream(object):
         """
         depth = 0
         root = None
-        try:
-            for (event, xml) in ET.iterparse(self.filesocket,
-                                             (b'end', b'start')):
-                if event == b'start':
-                    if depth == 0:
-                        # We have received the start of the root element.
-                        root = xml
-                        # Perform any stream initialization actions, such
-                        # as handshakes.
-                        self.stream_end_event.clear()
-                        self.start_stream_handler(root)
-                    depth += 1
-                if event == b'end':
-                    depth -= 1
-                    if depth == 0:
-                        # The stream's root element has closed,
-                        # terminating the stream.
-                        log.debug("End of stream recieved")
-                        self.stream_end_event.set()
-                        return False
-                    elif depth == 1:
-                        # We only raise events for stanzas that are direct
-                        # children of the root element.
-                        try:
-                            self.__spawn_event(xml)
-                        except RestartStream:
-                            return True
-                        if root:
-                            # Keep the root element empty of children to
-                            # save on memory use.
-                            root.clear()
-        except SyntaxError:
-            log.error("Error reading from XML stream.")
+        for event, xml in ET.iterparse(self.filesocket, (b'end', b'start')):
+            if event == b'start':
+                if depth == 0:
+                    # We have received the start of the root element.
+                    root = xml
+                    # Perform any stream initialization actions, such
+                    # as handshakes.
+                    self.stream_end_event.clear()
+                    self.start_stream_handler(root)
+                depth += 1
+            if event == b'end':
+                depth -= 1
+                if depth == 0:
+                    # The stream's root element has closed,
+                    # terminating the stream.
+                    log.debug("End of stream recieved")
+                    self.stream_end_event.set()
+                    return False
+                elif depth == 1:
+                    # We only raise events for stanzas that are direct
+                    # children of the root element.
+                    try:
+                        self.__spawn_event(xml)
+                    except RestartStream:
+                        return True
+                    if root is not None:
+                        # Keep the root element empty of children to
+                        # save on memory use.
+                        root.clear()
         log.debug("Ending read XML loop")
 
     def _build_stanza(self, xml, default_ns=None):
