@@ -6,10 +6,10 @@
     See the file LICENSE for copying permission.
 """
 
-from sleekxmpp.stanza.rootstanza import RootStanza
+from sleekxmpp.xmlstream import ElementBase
 from sleekxmpp.plugins import xep_0082
 
-class Geoloc(RootStanza):
+class Geoloc(ElementBase):
 
     """
     XMPP's <geoloc> stanza allows entities to know the current
