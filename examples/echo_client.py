@@ -35,8 +35,11 @@ class EchoBot(sleekxmpp.ClientXMPP):
     receives, along with a short thank you message.
     """
 
-    def __init__(self, jid, password):
+    def __init__(self, jid, password, pubsub_jid, node=''):
         sleekxmpp.ClientXMPP.__init__(self, jid, password)
+
+        self.pubsub_jid = pubsub_jid
+        self.node = node
 
         # The session_start event will be triggered when
         # the bot establishes its connection with the server
@@ -65,6 +68,10 @@ class EchoBot(sleekxmpp.ClientXMPP):
         """
         self.send_presence()
         self.get_roster()
+        
+        ps = self.plugin["xep_0060"]
+        raw = ps.get_items(self.pubsub_jid, node=self.node)
+        
 
     def message(self, msg):
         """
@@ -117,7 +124,7 @@ if __name__ == '__main__':
     # Setup the EchoBot and register plugins. Note that while plugins may
     # have interdependencies, the order in which you register them does
     # not matter.
-    xmpp = EchoBot(opts.jid, opts.password)
+    xmpp = EchoBot(opts.jid, opts.password, args[0], args[1])
     xmpp.register_plugin('xep_0030') # Service Discovery
     xmpp.register_plugin('xep_0004') # Data Forms
     xmpp.register_plugin('xep_0060') # PubSub
