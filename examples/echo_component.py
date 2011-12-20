@@ -12,10 +12,10 @@
 import sys
 import logging
 import time
-import getpass
 from optparse import OptionParser
 
 import sleekxmpp
+from sleekxmpp.componentxmpp import ComponentXMPP
 
 # Python versions before 3.0 do not use UTF-8 encoding
 # by default. To ensure that Unicode is handled properly
@@ -28,50 +28,22 @@ else:
     raw_input = input
 
 
-class EchoBot(sleekxmpp.ClientXMPP):
+class EchoComponent(ComponentXMPP):
 
     """
-    A simple SleekXMPP bot that will echo messages it
-    receives, along with a short thank you message.
+    A simple SleekXMPP component that echoes messages.
     """
 
-    def __init__(self, jid, password, pubsub_jid, node=''):
-        sleekxmpp.ClientXMPP.__init__(self, jid, password)
+    def __init__(self, jid, secret, server, port):
+        ComponentXMPP.__init__(self, jid, secret, server, port)
 
-        self.pubsub_jid = pubsub_jid
-        self.node = node
-
-        # The session_start event will be triggered when
-        # the bot establishes its connection with the server
-        # and the XML streams are ready for use. We want to
-        # listen for this event so that we we can intialize
-        # our roster.
-        self.add_event_handler("session_start", self.start)
+        # You don't need a session_start handler, but that is
+        # where you would broadcast initial presence.
 
         # The message event is triggered whenever a message
         # stanza is received. Be aware that that includes
         # MUC messages and error messages.
         self.add_event_handler("message", self.message)
-
-    def start(self, event):
-        """
-        Process the session_start event.
-
-        Typical actions for the session_start event are
-        requesting the roster and broadcasting an intial
-        presence stanza.
-
-        Arguments:
-            event -- An empty dictionary. The session_start
-                     event does not provide any additional
-                     data.
-        """
-        self.send_presence()
-        self.get_roster()
-        
-        ps = self.plugin["xep_0060"]
-        raw = ps.get_items(self.pubsub_jid, node=self.node)
-        
 
     def message(self, msg):
         """
@@ -80,13 +52,17 @@ class EchoBot(sleekxmpp.ClientXMPP):
         a good idea to check the messages's type before processing
         or sending replies.
 
+        Since a component may send messages from any number of JIDs,
+        it is best to always include a from JID.
+
         Arguments:
             msg -- The received message stanza. See the documentation
                    for stanza objects and the Message stanza to see
                    how it may be used.
         """
-        if msg['type'] in ('chat', 'normal'):
-            msg.reply("Thanks for sending\n%(body)s" % msg).send()
+        # The reply method will use the messages 'to' JID as the
+        # outgoing reply's 'from' JID.
+        msg.reply("Thanks for sending\n%(body)s" % msg).send()
 
 
 if __name__ == '__main__':
@@ -109,43 +85,37 @@ if __name__ == '__main__':
                     help="JID to use")
     optp.add_option("-p", "--password", dest="password",
                     help="password to use")
+    optp.add_option("-s", "--server", dest="server",
+                    help="server to connect to")
+    optp.add_option("-P", "--port", dest="port",
+                    help="port to connect to")
 
     opts, args = optp.parse_args()
+
+    if opts.jid is None:
+        opts.jid = raw_input("Component JID: ")
+    if opts.password is None:
+        opts.password = getpass.getpass("Password: ")
+    if opts.server is None:
+        opts.server = raw_input("Server: ")
+    if opts.port is None:
+        opts.port = int(raw_input("Port: "))
 
     # Setup logging.
     logging.basicConfig(level=opts.loglevel,
                         format='%(levelname)-8s %(message)s')
 
-    if opts.jid is None:
-        opts.jid = raw_input("Username: ")
-    if opts.password is None:
-        opts.password = getpass.getpass("Password: ")
-
-    # Setup the EchoBot and register plugins. Note that while plugins may
-    # have interdependencies, the order in which you register them does
+    # Setup the EchoComponent and register plugins. Note that while plugins
+    # may have interdependencies, the order in which you register them does
     # not matter.
-    xmpp = EchoBot(opts.jid, opts.password, args[0], args[1])
-    xmpp.register_plugin('xep_0030') # Service Discovery
-    xmpp.register_plugin('xep_0004') # Data Forms
-    xmpp.register_plugin('xep_0060') # PubSub
-    xmpp.register_plugin('xep_0199') # XMPP Ping
-
-    # If you are working with an OpenFire server, you may need
-    # to adjust the SSL version used:
-    # xmpp.ssl_version = ssl.PROTOCOL_SSLv3
-
-    # If you want to verify the SSL certificates offered by a server:
-    # xmpp.ca_certs = "path/to/ca/cert"
+    xmpp = EchoComponent(opts.jid, opts.password, opts.server, opts.port)
+    xmpp.registerPlugin('xep_0030') # Service Discovery
+    xmpp.registerPlugin('xep_0004') # Data Forms
+    xmpp.registerPlugin('xep_0060') # PubSub
+    xmpp.registerPlugin('xep_0199') # XMPP Ping
 
     # Connect to the XMPP server and start processing XMPP stanzas.
     if xmpp.connect():
-        # If you do not have the pydns library installed, you will need
-        # to manually specify the name of the server if it does not match
-        # the one in the JID. For example, to use Google Talk you would
-        # need to use:
-        #
-        # if xmpp.connect(('talk.google.com', 5222)):
-        #     ...
         xmpp.process(threaded=False)
         print("Done")
     else:
