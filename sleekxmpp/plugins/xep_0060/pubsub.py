@@ -29,18 +29,40 @@ class xep_0060(base_plugin):
         self.description = 'Publish-Subscribe'
         self.stanza = stanza
 
-        self.xmpp.registerHandler(Callback('pubsub get items', StanzaPath('iq@type=get/pubsub/items'), self._handleGetItems))
-        self.xmpp.registerHandler(Callback('pubsub subscribe', StanzaPath('iq@type=set/pubsub/subscribe'), self._handleSubscribe))
-        self.xmpp.registerHandler(Callback('pubsub unsubscribe', StanzaPath('iq@type=set/pubsub/unsubscribe'), self._handleUnsubscribe))
+        self.xmpp.registerHandler(Callback('pubsub get items', StanzaPath('iq@type=get/pubsub/items'), self._handle_get_items))
+        self.xmpp.registerHandler(Callback('pubsub set items', StanzaPath('iq@type=set/pubsub/publish'), self._handle_set_items))
+        self.xmpp.registerHandler(Callback('pubsub create node', StanzaPath('iq@type=set/pubsub/create'), self._handle_create_node))
+        self.xmpp.registerHandler(Callback('pubsub delete node', StanzaPath('iq@type=set/pubsub/delete'), self._handle_delete_node))
+        self.xmpp.registerHandler(Callback('pubsub retract node', StanzaPath('iq@type=set/pubsub/retract'), self._handle_retract_node))
+        self.xmpp.registerHandler(Callback('pubsub_owner config node', StanzaPath('iq@type=get/pubsub_owner/configure'), self._handle_get_config_node))
+        self.xmpp.registerHandler(Callback('pubsub subscribe', StanzaPath('iq@type=set/pubsub/subscribe'), self._handle_subscribe))
+        self.xmpp.registerHandler(Callback('pubsub unsubscribe', StanzaPath('iq@type=set/pubsub/unsubscribe'), self._handle_unsubscribe))
 
-    def _handleSubscribe(self, iq):
+    def _handle_get_items(self, iq):
+        self.xmpp.event('pubsub_get_items', iq)
+
+    def _handle_set_items(self, iq):
+        self.xmpp.event('pubsub_set_items', iq)
+
+    def _handle_create_node(self, iq):
+        self.xmpp.event('pubsub_create_node', iq)
+
+    def _handle_delete_node(self, iq):
+        self.xmpp.event('pubsub_delete_node', iq)
+
+    def _handle_retract_node(self, iq):
+        self.xmpp.event('pubsub_retract_node', iq)
+
+    def _handle_get_config_node(self, iq):
+        self.xmpp.event('pubsub_get_config_node', iq)
+        
+    def _handle_subscribe(self, iq):
         self.xmpp.event('pubsub_subscribe', iq)
     
-    def _handleUnsubscribe(self, iq):
+    def _handle_unsubscribe(self, iq):
         self.xmpp.event('pubsub_unsubscribe', iq)
 
-    def _handleGetItems(self, iq):
-        self.xmpp.event('pubsub_get_items', iq)
+
 
     def create_node(self, jid, node, config=None, ntype=None, ifrom=None,
                     block=True, callback=None, timeout=None):
