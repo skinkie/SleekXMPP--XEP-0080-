@@ -12,13 +12,8 @@ SleekXMPP
     ``master`` branch, while the latest development version is in the
     ``develop`` branch.
 
-    **Stable Releases**
-        - `1.0 Beta6.1 <http://github.com/fritzy/SleekXMPP/zipball/1.0-Beta6.1>`_  
-        - `1.0 Beta5 <http://github.com/fritzy/SleekXMPP/zipball/1.0-Beta5>`_
-        - `1.0 Beta4 <http://github.com/fritzy/SleekXMPP/zipball/1.0-Beta4>`_
-        - `1.0 Beta3 <http://github.com/fritzy/SleekXMPP/zipball/1.0-Beta3>`_
-        - `1.0 Beta2 <http://github.com/fritzy/SleekXMPP/zipball/1.0-Beta2>`_
-        - `1.0 Beta1 <http://github.com/fritzy/SleekXMPP/zipball/1.0-Beta1>`_
+    **Latest Stable Release**
+        - `1.0 RC3 <http://github.com/fritzy/SleekXMPP/zipball/1.0-RC3>`_  
 
     **Develop Releases**
         - `Latest Develop Version <http://github.com/fritzy/SleekXMPP/zipball/develop>`_
@@ -84,8 +79,10 @@ Tutorials, FAQs, and How To Guides
 .. toctree::
     :maxdepth: 1
    
+    faq
     xeps
     xmpp_tdg
+    howto/stanzas
     create_plugin
     features
     sasl
@@ -113,8 +110,35 @@ API Reference
     
     event_index
     api/clientxmpp
+    api/componentxmpp
     api/basexmpp
-    api/xmlstream
+    api/exceptions
+    api/xmlstream/jid
+    api/xmlstream/stanzabase
+    api/xmlstream/handler
+    api/xmlstream/matcher
+    api/xmlstream/xmlstream
+    api/xmlstream/scheduler
+    api/xmlstream/tostring
+    api/xmlstream/filesocket
+
+Core Stanzas
+~~~~~~~~~~~~
+.. toctree::
+    :maxdepth: 2
+
+    api/stanza/rootstanza
+    api/stanza/message
+    api/stanza/presence
+    api/stanza/iq
+    api/stanza/error
+    api/stanza/stream_error
+
+Plugins
+~~~~~~~
+.. toctree::
+    :maxdepth: 2
+
 
 Additional Info
 ---------------

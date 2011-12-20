@@ -17,6 +17,7 @@ from sleekxmpp.xmlstream import register_stanza_plugin, JID
 from sleekxmpp.plugins.base import base_plugin
 from sleekxmpp.plugins.xep_0050 import stanza
 from sleekxmpp.plugins.xep_0050 import Command
+from sleekxmpp.plugins.xep_0004 import Form
 
 
 log = logging.getLogger(__name__)
@@ -92,7 +93,8 @@ class xep_0050(base_plugin):
                          StanzaPath('iq@type=set/command'),
                          self._handle_command))
 
-        register_stanza_plugin(Iq, stanza.Command)
+        register_stanza_plugin(Iq, Command)
+        register_stanza_plugin(Command, Form)
 
         self.xmpp.add_event_handler('command_execute',
                                     self._handle_command_start,
@@ -211,8 +213,7 @@ class xep_0050(base_plugin):
         key = (iq['to'].full, node)
         name, handler = self.commands.get(key, ('Not found', None))
         if not handler:
-            log.debug('Command not found: %s, %s' % (key, self.commands))
-
+            log.debug('Command not found: %s, %s', key, self.commands)
         initial_session = {'id': sessionid,
                            'from': iq['from'],
                            'to': iq['to'],

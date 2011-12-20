@@ -1,9 +1,15 @@
+# -*- coding: utf-8 -*-
 """
-    SleekXMPP: The Sleek XMPP Library
-    Copyright (C) 2010  Nathanael C. Fritz
-    This file is part of SleekXMPP.
+    sleekxmpp.clientxmpp
+    ~~~~~~~~~~~~~~~~~~~~
 
-    See the file LICENSE for copying permission.
+    This module provides XMPP functionality that
+    is specific to client connections.
+
+    Part of SleekXMPP: The Sleek XMPP Library
+
+    :copyright: (c) 2011 Nathanael C. Fritz
+    :license: MIT, see LICENSE for more details
 """
 
 from __future__ import absolute_import, unicode_literals
@@ -41,37 +47,30 @@ log = logging.getLogger(__name__)
 class ClientXMPP(BaseXMPP):
 
     """
-    SleekXMPP's client class. ( Use only for good, not for evil.)
+    SleekXMPP's client class. (Use only for good, not for evil.)
 
-    Typical Use:
-    xmpp = ClientXMPP('user@server.tld/resource', 'password')
-    xmpp.process(block=False) // when block is True, it blocks the current
-    //                           thread. False by default.
+    Typical use pattern:
 
-    Attributes:
+    .. code-block:: python
 
-    Methods:
-        connect          -- Overrides XMLStream.connect.
-        del_roster_item  -- Delete a roster item.
-        get_roster       -- Retrieve the roster from the server.
-        register_feature -- Register a stream feature.
-        update_roster    -- Update a roster item.
+        xmpp = ClientXMPP('user@server.tld/resource', 'password')
+        # ... Register plugins and event handlers ...
+        xmpp.connect()
+        xmpp.process(block=False) # block=True will block the current
+                                  # thread. By default, block=False
+
+    :param jid: The JID of the XMPP user account.
+    :param password: The password for the XMPP user account.
+    :param ssl: **Deprecated.**
+    :param plugin_config: A dictionary of plugin configurations.
+    :param plugin_whitelist: A list of approved plugins that 
+                    will be loaded when calling 
+                    :meth:`~sleekxmpp.basexmpp.BaseXMPP.register_plugins()`.
+    :param escape_quotes: **Deprecated.**
     """
 
     def __init__(self, jid, password, ssl=False, plugin_config={},
                  plugin_whitelist=[], escape_quotes=True, sasl_mech=None):
-        """
-        Create a new SleekXMPP client.
-
-        Arguments:
-            jid              -- The JID of the XMPP user account.
-            password         -- The password for the XMPP user account.
-            ssl              -- Deprecated.
-            plugin_config    -- A dictionary of plugin configurations.
-            plugin_whitelist -- A list of approved plugins that will be loaded
-                                when calling register_plugins.
-            escape_quotes    -- Deprecated.
-        """
         BaseXMPP.__init__(self, jid, 'jabber:client')
 
         self.set_jid(jid)
@@ -119,36 +118,35 @@ class ClientXMPP(BaseXMPP):
         self.register_plugin('feature_mechanisms',
                 pconfig={'use_mech': sasl_mech} if sasl_mech else None)
 
-    def connect(self, address=tuple(), reattempt=True, use_tls=True):
-        """
-        Connect to the XMPP server.
+    def connect(self, address=tuple(), reattempt=True,
+                use_tls=True, use_ssl=False):
+        """Connect to the XMPP server.
 
         When no address is given, a SRV lookup for the server will
         be attempted. If that fails, the server user in the JID
         will be used.
 
-        Arguments:
-            address   -- A tuple containing the server's host and port.
-            reattempt -- If True, reattempt the connection if an
-                         error occurs. Defaults to True.
-            use_tls   -- Indicates if TLS should be used for the
-                         connection. Defaults to True.
+        :param address   -- A tuple containing the server's host and port.
+        :param reattempt: If ``True``, repeat attempting to connect if an
+                         error occurs. Defaults to ``True``.
+        :param use_tls: Indicates if TLS should be used for the
+                        connection. Defaults to ``True``.
+        :param use_ssl: Indicates if the older SSL connection method
+                        should be used. Defaults to ``False``.
         """
         self.session_started_event.clear()
         if not address:
             address = (self.boundjid.host, 5222)
 
         return XMLStream.connect(self, address[0], address[1],
-                                 use_tls=use_tls, reattempt=reattempt)
+                                 use_tls=use_tls, use_ssl=use_ssl,
+                                 reattempt=reattempt)
 
     def get_dns_records(self, domain, port=None):
-        """
-        Get the DNS records for a domain.
-        Overriddes XMLStream.get_dns_records to use SRV.
+        """Get the DNS records for a domain, including SRV records.
 
-        Arguments:
-            domain -- The domain in question.
-            port   -- If the results don't include a port, use this one.
+        :param domain: The domain in question.
+        :param port: If the results don't include a port, use this one.
         """
         if port is None:
             port = self.default_port
@@ -160,11 +158,11 @@ class ClientXMPP(BaseXMPP):
                     address = (answer.target.to_text()[:-1], answer.port)
                     answers.append((address, answer.priority, answer.weight))
             except (dns.resolver.NXDOMAIN, dns.resolver.NoAnswer):
-                log.warning("No SRV records for %s" % domain)
+                log.warning("No SRV records for %s", domain)
                 answers = super(ClientXMPP, self).get_dns_records(domain, port)
             except dns.exception.Timeout:
                 log.warning("DNS resolution timed out " + \
-                            "for SRV record of %s" % domain)
+                            "for SRV record of %s", domain)
                 answers = super(ClientXMPP, self).get_dns_records(domain, port)
             return answers
         else:
@@ -173,17 +171,15 @@ class ClientXMPP(BaseXMPP):
             return [((domain, port), 0, 0)]
 
     def register_feature(self, name, handler, restart=False, order=5000):
-        """
-        Register a stream feature.
+        """Register a stream feature handler.
 
-        Arguments:
-            name    -- The name of the stream feature.
-            handler -- The function to execute if the feature is received.
-            restart -- Indicates if feature processing should halt with
-                       this feature. Defaults to False.
-            order   -- The relative ordering in which the feature should
-                       be negotiated. Lower values will be attempted
-                       earlier when available.
+        :param name: The name of the stream feature.
+        :param handler: The function to execute if the feature is received.
+        :param restart: Indicates if feature processing should halt with
+                        this feature. Defaults to ``False``.
+        :param order: The relative ordering in which the feature should
+                      be negotiated. Lower values will be attempted
+                      earlier when available.
         """
         self._stream_feature_handlers[name] = (handler, restart)
         self._stream_feature_order.append((order, name))
@@ -191,53 +187,51 @@ class ClientXMPP(BaseXMPP):
 
     def update_roster(self, jid, name=None, subscription=None, groups=[],
                             block=True, timeout=None, callback=None):
-        """
-        Add or change a roster item.
+        """Add or change a roster item.
 
-        Arguments:
-            jid          -- The JID of the entry to modify.
-            name         -- The user's nickname for this JID.
-            subscription -- The subscription status. May be one of
-                            'to', 'from', 'both', or 'none'. If set
-                            to 'remove', the entry will be deleted.
-            groups       -- The roster groups that contain this item.
-            block        -- Specify if the roster request will block
-                            until a response is received, or a timeout
-                            occurs. Defaults to True.
-            timeout      -- The length of time (in seconds) to wait
-                            for a response before continuing if blocking
-                            is used. Defaults to self.response_timeout.
-            callback     -- Optional reference to a stream handler function.
-                            Will be executed when the roster is received.
-                            Implies block=False.
+        :param jid: The JID of the entry to modify.
+        :param name: The user's nickname for this JID.
+        :param subscription: The subscription status. May be one of
+                             ``'to'``, ``'from'``, ``'both'``, or
+                             ``'none'``. If set to ``'remove'``,
+                             the entry will be deleted.
+        :param groups: The roster groups that contain this item.
+        :param block: Specify if the roster request will block
+                      until a response is received, or a timeout
+                      occurs. Defaults to ``True``.
+        :param timeout: The length of time (in seconds) to wait
+                        for a response before continuing if blocking
+                        is used. Defaults to 
+            :attr:`~sleekxmpp.xmlstream.xmlstream.XMLStream.response_timeout`.
+        :param callback: Optional reference to a stream handler function.
+                         Will be executed when the roster is received.
+                         Implies ``block=False``.
         """
-        return self.client_roster.updtae(jid, name, subscription, groups,
+        return self.client_roster.update(jid, name, subscription, groups,
                                          block, timeout, callback)
 
     def del_roster_item(self, jid):
-        """
-        Remove an item from the roster by setting its subscription
-        status to 'remove'.
+        """Remove an item from the roster.
+        
+        This is done by setting its subscription status to ``'remove'``.
 
-        Arguments:
-            jid -- The JID of the item to remove.
+        :param jid: The JID of the item to remove.
         """
         return self.client_roster.remove(jid)
 
     def get_roster(self, block=True, timeout=None, callback=None):
-        """
-        Request the roster from the server.
+        """Request the roster from the server.
 
-        Arguments:
-            block    -- Specify if the roster request will block until a
-                        response is received, or a timeout occurs.
-                        Defaults to True.
-            timeout  -- The length of time (in seconds) to wait for a response
+        :param block: Specify if the roster request will block until a
+                      response is received, or a timeout occurs.
+                      Defaults to ``True``.
+        :param timeout: The length of time (in seconds) to wait for a response
                         before continuing if blocking is used.
-                        Defaults to self.response_timeout.
-            callback -- Optional reference to a stream handler function. Will
-                        be executed when the roster is received.
-                        Implies block=False.
+                        Defaults to 
+            :attr:`~sleekxmpp.xmlstream.xmlstream.XMLStream.response_timeout`.
+        :param callback: Optional reference to a stream handler function. Will
+                         be executed when the roster is received.
+                         Implies ``block=False``.
         """
         iq = self.Iq()
         iq['type'] = 'get'
@@ -256,11 +250,9 @@ class ClientXMPP(BaseXMPP):
         self.features = set()
 
     def _handle_stream_features(self, features):
-        """
-        Process the received stream features.
+        """Process the received stream features.
 
-        Arguments:
-            features -- The features stanza.
+        :param features: The features stanza.
         """
         for order, name in self._stream_feature_order:
             if name in features['features']:
@@ -271,13 +263,12 @@ class ClientXMPP(BaseXMPP):
                     return True
 
     def _handle_roster(self, iq, request=False):
-        """
-        Update the roster after receiving a roster stanza.
+        """Update the roster after receiving a roster stanza.
 
-        Arguments:
-            iq      -- The roster stanza.
-            request -- Indicates if this stanza is a response
-                       to a request for the roster.
+        :param iq: The roster stanza.
+        :param request: Indicates if this stanza is a response
+                        to a request for the roster, and not an
+                        empty acknowledgement from the server.
         """
         if iq['type'] == 'set' or (iq['type'] == 'result' and request):
             for jid in iq['roster']['items']:

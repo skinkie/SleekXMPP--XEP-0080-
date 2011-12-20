@@ -172,6 +172,7 @@ class RosterItem(object):
         Save the item's state information to an external datastore,
         if one has been provided.
         """
+        self['subscription'] = self._subscription()
         if self.db:
             self.db.save(self.owner, self.jid,
                          self._state, self._db_state)
@@ -224,7 +225,7 @@ class RosterItem(object):
         if self['to']:
             p = self.xmpp.Presence()
             p['to'] = self.jid
-            p['type'] = ['unsubscribe']
+            p['type'] = 'unsubscribe'
             if self.xmpp.is_component:
                 p['from'] = self.owner
             p.send()
@@ -345,7 +346,11 @@ class RosterItem(object):
             self.xmpp.event('got_online', presence)
         if resource not in self.resources:
             self.resources[resource] = {}
+        old_status = self.resources[resource].get('status', '')
+        old_show = self.resources[resource].get('show', None)
         self.resources[resource].update(data)
+        if old_show != presence['show'] or old_status != presence['status']:
+            self.xmpp.event('changed_status', presence)
 
     def handle_unavailable(self, presence):
         resource = presence['from'].resource
@@ -353,6 +358,7 @@ class RosterItem(object):
             return
         if resource in self.resources:
             del self.resources[resource]
+        self.xmpp.event('changed_status', presence)
         if not self.resources:
             self.xmpp.event('got_offline', presence)
 
