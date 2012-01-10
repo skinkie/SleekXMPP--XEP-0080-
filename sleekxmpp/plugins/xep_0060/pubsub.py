@@ -24,10 +24,15 @@ class xep_0060(base_plugin):
     XEP-0060 Publish Subscribe
     """
 
-    def plugin_init(self):
+    def plugin_init(self, trusted_jids=None):
         self.xep = '0060'
         self.description = 'Publish-Subscribe'
         self.stanza = stanza
+
+        if trusted_jids is None:
+            self._trusted_jids = []
+        else:
+            self._trusted_jids = trusted_jids
 
         self.xmpp.registerHandler(Callback('pubsub get items', StanzaPath('iq@type=get/pubsub/items'), self._handle_get_items))
         self.xmpp.registerHandler(Callback('pubsub set items', StanzaPath('iq@type=set/pubsub/publish'), self._handle_set_items))
@@ -37,32 +42,44 @@ class xep_0060(base_plugin):
         self.xmpp.registerHandler(Callback('pubsub_owner config node', StanzaPath('iq@type=get/pubsub_owner/configure'), self._handle_get_config_node))
         self.xmpp.registerHandler(Callback('pubsub subscribe', StanzaPath('iq@type=set/pubsub/subscribe'), self._handle_subscribe))
         self.xmpp.registerHandler(Callback('pubsub unsubscribe', StanzaPath('iq@type=set/pubsub/unsubscribe'), self._handle_unsubscribe))
+        self.xmpp.registerHandler(Callback('pubsub retrieve subscriptions', StanzaPath('iq@type=get/pubsub/subscriptions'), self._handle_retrieve_subscriptions))
+        self.xmpp.registerHandler(Callback('pubsub retrieve affiliations', StanzaPath('iq@type=get/pubsub/affiliations'), self._handle_retrieve_affiliations))
 
     def _handle_get_items(self, iq):
-        self.xmpp.event('pubsub_get_items', iq)
+        self.xmpp.event('pubsub_get_items', iq, iq['pubsub']['items']['node'])
 
     def _handle_set_items(self, iq):
-        self.xmpp.event('pubsub_set_items', iq)
+        self.xmpp.event('pubsub_set_items', iq, iq['pubsub']['items']['node'])
 
     def _handle_create_node(self, iq):
-        self.xmpp.event('pubsub_create_node', iq)
+        self.xmpp.event('pubsub_create_node', iq, iq['pubsub']['items']['node'])
 
     def _handle_delete_node(self, iq):
-        self.xmpp.event('pubsub_delete_node', iq)
+        self.xmpp.event('pubsub_delete_node', iq, iq['pubsub']['items']['node'])
 
     def _handle_retract_node(self, iq):
-        self.xmpp.event('pubsub_retract_node', iq)
+        self.xmpp.event('pubsub_retract_node', iq, iq['pubsub']['items']['node'])
 
     def _handle_get_config_node(self, iq):
-        self.xmpp.event('pubsub_get_config_node', iq)
+        self.xmpp.event('pubsub_get_config_node', iq, iq['pubsub']['items']['node'])
         
     def _handle_subscribe(self, iq):
-        self.xmpp.event('pubsub_subscribe', iq)
+        if iq['from'].bare != iq['pubsub']['subscribe']['jid'].bare and iq['from'].bare not in trusted_jids:
+            raise XMPPError(condition='invalid-jid')
+
+        self.xmpp.event('pubsub_subscribe', iq, iq['pubsub']['subscribe']['jid'], iq['subscribe']['node'])
     
     def _handle_unsubscribe(self, iq):
+        if iq['from'].bare != iq['pubsub']['unsubscribe']['jid'].bare and iq['from'].bare not in trusted_jids:
+            raise XMPPError(condition='forbidden')
+
         self.xmpp.event('pubsub_unsubscribe', iq)
 
-
+    def _handle_retrieve_subscriptions(self, iq):
+        self.xmpp.event('pubsub_retrieve_subscriptions', iq, iq['pubsub']['subscriptions']['jid'].bare)
+    
+    def _handle_retrieve_affiliations(self, iq):
+        self.xmpp.event('pubsub_retrieve_subscriptions', iq, iq['pubsub']['affiliations']['jid'].bare)
 
     def create_node(self, jid, node, config=None, ntype=None, ifrom=None,
                     block=True, callback=None, timeout=None):
